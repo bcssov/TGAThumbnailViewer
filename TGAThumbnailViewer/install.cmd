@@ -1,0 +1,1 @@
+srm install TGAThumbnailViewer.dll -codebase
