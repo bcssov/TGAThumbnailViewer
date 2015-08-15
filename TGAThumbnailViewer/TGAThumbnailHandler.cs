@@ -4,7 +4,7 @@
 // Created          : 08-13-2015
 //
 // Last Modified By : Mario
-// Last Modified On : 08-13-2015
+// Last Modified On : 08-15-2015
 // ***********************************************************************
 // <copyright file="TGAThumbnailHandler.cs" company="">
 //     Copyright (c) . All rights reserved.
@@ -31,27 +31,6 @@ namespace TGAThumbnailViewer
     [COMServerAssociation(AssociationType.FileExtension, ".tga")]
     public class TGAThumbnailHandler : SharpThumbnailHandler
     {
-        #region Fields
-
-        /// <summary>
-        /// The _empty
-        /// </summary>
-        private Bitmap _empty;
-
-        #endregion Fields
-
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TGAThumbnailHandler" /> class.
-        /// </summary>
-        public TGAThumbnailHandler()
-        {
-            _empty = CreateEmptyBitmap();
-        }
-
-        #endregion Constructors
-
         #region Methods
 
         // source: https://stackoverflow.com/questions/8214562/resize-jpeg-image-to-fixed-width-while-keeping-aspect-ratio-as-it-is
@@ -99,19 +78,20 @@ namespace TGAThumbnailViewer
             {
                 LogError("TGAThumbnailViewer", ex);
             }
-            return _empty;
+            return CreateEmptyBitmap(Convert.ToInt32(width));
         }
 
         /// <summary>
         /// Creates the empty bitmap.
         /// </summary>
+        /// <param name="width">The width.</param>
         /// <returns>Bitmap.</returns>
-        private Bitmap CreateEmptyBitmap()
+        private Bitmap CreateEmptyBitmap(int width)
         {
-            Bitmap bmp = new Bitmap(100, 100);
+            Bitmap bmp = new Bitmap(width, width);
             using (Graphics graph = Graphics.FromImage(bmp))
             {
-                Rectangle ImageSize = new Rectangle(0, 0, 100, 100);
+                Rectangle ImageSize = new Rectangle(0, 0, width, width);
                 graph.FillRectangle(Brushes.White, ImageSize);
             }
             return bmp;
