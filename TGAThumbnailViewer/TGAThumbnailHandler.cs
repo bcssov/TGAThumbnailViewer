@@ -33,31 +33,20 @@ namespace TGAThumbnailViewer
     {
         #region Methods
 
-        // source: https://stackoverflow.com/questions/8214562/resize-jpeg-image-to-fixed-width-while-keeping-aspect-ratio-as-it-is
         /// <summary>
-        /// Resizes the width of the image fixed.
+        /// Creates the empty bitmap.
         /// </summary>
-        /// <param name="imgToResize">The img to resize.</param>
-        /// <param name="width">The width.</param>
-        /// <returns>Image.</returns>
-        public Bitmap ResizeImage(Image imgToResize, int width)
+        /// <param name="size">The size.</param>
+        /// <returns>Bitmap.</returns>
+        protected Bitmap CreateEmptyBitmap(int size)
         {
-            int sourceWidth = imgToResize.Width;
-            int sourceHeight = imgToResize.Height;
-
-            float nPercent = ((float)width / (float)sourceWidth);
-
-            int destWidth = (int)(sourceWidth * nPercent);
-            int destHeight = (int)(sourceHeight * nPercent);
-
-            Bitmap b = new Bitmap(destWidth, destHeight);
-            Graphics g = Graphics.FromImage((Image)b);
-            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
-            g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
-            g.Dispose();
-
-            return b;
+            Bitmap bmp = new Bitmap(size, size);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                Rectangle imageSize = new Rectangle(0, 0, size, size);
+                g.FillRectangle(Brushes.White, imageSize);
+            }
+            return bmp;
         }
 
         /// <summary>
@@ -67,32 +56,53 @@ namespace TGAThumbnailViewer
         /// <returns>Bitmap.</returns>
         protected override Bitmap GetThumbnailImage(uint width)
         {
-            try
+            Bitmap bmp = null;
+            using (SelectedItemStream)
             {
-                var tga = new Paloma.TargaImage(SelectedItemStream);
-                var img = tga.Image;
-                if (img != null)
-                    return ResizeImage(img, Convert.ToInt32(width));
+                try
+                {
+                    var tga = new Paloma.TargaImage(SelectedItemStream);
+                    if (tga != null)
+                    {
+                        var tgaImg = tga.Image;
+                        if (tgaImg != null)
+                            bmp = ResizeImage(tgaImg, Convert.ToInt32(width));
+                        tga.Dispose();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogError("TGAThumbnailViewer", ex);
+                }
             }
-            catch (Exception ex)
-            {
-                LogError("TGAThumbnailViewer", ex);
-            }
-            return CreateEmptyBitmap(Convert.ToInt32(width));
+            if (bmp == null)
+                bmp = CreateEmptyBitmap(Convert.ToInt32(width));
+            GC.Collect();
+            return bmp;
         }
 
         /// <summary>
-        /// Creates the empty bitmap.
+        /// Resizes the image.
         /// </summary>
+        /// <param name="imgToResize">The img to resize.</param>
         /// <param name="width">The width.</param>
         /// <returns>Bitmap.</returns>
-        private Bitmap CreateEmptyBitmap(int width)
+        protected Bitmap ResizeImage(Image imgToResize, int width)
         {
-            Bitmap bmp = new Bitmap(width, width);
-            using (Graphics graph = Graphics.FromImage(bmp))
+            // source: https://stackoverflow.com/questions/8214562/resize-jpeg-image-to-fixed-width-while-keeping-aspect-ratio-as-it-is
+            int sourceWidth = imgToResize.Width;
+            int sourceHeight = imgToResize.Height;
+
+            float nPercent = Convert.ToSingle(width) / Convert.ToSingle(sourceWidth);
+
+            int destWidth = (int)(sourceWidth * nPercent);
+            int destHeight = (int)(sourceHeight * nPercent);
+
+            Bitmap bmp = new Bitmap(destWidth, destHeight);
+            using (Graphics g = Graphics.FromImage(bmp))
             {
-                Rectangle ImageSize = new Rectangle(0, 0, width, width);
-                graph.FillRectangle(Brushes.White, ImageSize);
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
             }
             return bmp;
         }
